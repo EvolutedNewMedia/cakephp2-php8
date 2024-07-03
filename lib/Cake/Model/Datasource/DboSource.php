@@ -2462,6 +2462,12 @@ class DboSource extends DataSource {
 				$this->took = $this->numRows = $this->affected = false;
 				$this->logQuery('COMMIT');
 			}
+
+			if (!$this->_connection->inTransaction()) {
+				error_log('Commit failed: Transaction is not active');
+				return false;
+			}
+
 			$this->_transactionStarted = false;
 			return $this->_connection->commit();
 		}
@@ -3270,13 +3276,14 @@ class DboSource extends DataSource {
 		}
 		$sign = isset($result[3]);
 
+		if ($length === null) {
+			// prevent deprecation warnings
+			return null;
+		}
+
 		$isFloat = in_array($type, array('dec', 'decimal', 'float', 'numeric', 'double'));
 		if ($isFloat && strpos($length, ',') !== false) {
 			return $length;
-		}
-
-		if ($length === null) {
-			return null;
 		}
 
 		if (isset($types[$type])) {
